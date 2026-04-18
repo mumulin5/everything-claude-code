@@ -7,11 +7,13 @@ version: 1.0.0
 
 # WorkBuddy Evolving Skill
 
+This is a bilingual (English + 中文) WorkBuddy skill blueprint for a self-evolving plugin.
 面向 WorkBuddy 的自我进化型技能插件模板，融合三层能力：
 
 1. **Claude 最新能力层**：Messages API、Tool Use、Vision、Streaming、Extended Thinking、Prompt Caching、Batches、Agent SDK。
 2. **Herms 核心层**：任务编排、工具路由、记忆检索、执行反馈闭环。
-3. **女娲（Nüwa）核心层**：经验沉淀、策略重写、能力进化、安全约束。
+3. **女娲（Nüwa）核心层**：经验沉淀、策略重写、能力进化、安全约束。  
+   Nüwa here means a learning-and-evolution layer that turns execution feedback into safer, better next-run policies.
 
 ## When to Activate
 
@@ -23,9 +25,9 @@ version: 1.0.0
 
 | Layer | Core Functions | WorkBuddy Output |
 |---|---|---|
-| Claude | thinking budget, tool use, vision, caching, batch async | 高质量推理 + 低成本批处理 |
-| Herms | intent parsing, router, memory lookup, action pipeline | 稳定可控的任务执行链路 |
-| Nüwa | pattern mining, policy evolution, confidence scoring | 持续优化的提示词与流程策略 |
+| Claude | extended thinking, tool use, vision, caching, batch async | high-quality reasoning + cost-efficient async throughput |
+| Herms | intent parsing, router, memory lookup, action pipeline | stable and controllable execution pipeline |
+| Nüwa | pattern mining, policy evolution, confidence scoring | continuously improving prompt and workflow policy |
 
 ## WorkBuddy Runtime Contract
 
@@ -52,12 +54,14 @@ version: 1.0.0
 
 ## Minimal Operating Rules
 
-- 默认使用 Sonnet 作为执行模型，复杂规划可切换 Opus。
+- 默认使用 Claude Sonnet 作为执行模型，复杂规划可切换 Claude Opus。
 - 工具调用必须带结构化参数并保留调用日志。
 - 进化策略必须可回滚，禁止覆盖历史稳定策略。
 - 对外部输入执行白名单校验，敏感信息脱敏后入库。
 
 ## Quick Start Prompt
+
+在 WorkBuddy 的系统提示或插件初始化提示中使用以下模板：
 
 ```text
 Use workbuddy-evolving-skill mode.
