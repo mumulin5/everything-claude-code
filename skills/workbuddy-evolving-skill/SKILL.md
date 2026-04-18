@@ -42,7 +42,7 @@ This is a bilingual (English + 中文) WorkBuddy skill blueprint for a self-evol
 1. **Plan**：解析意图，拆分任务，定义成功标准和停止条件。
 2. **Act**：调用最小必要工具，使用结构化参数，保持可追踪执行。
 3. **Observe**：记录工具输出（status/summary/next_actions/artifacts）用于后续决策。
-4. **Recover**：失败时提供根因提示、安全重试路径与明确 stop condition。
+4. **Recover**：失败时提供根因提示、安全重试路径与明确停止条件。
 5. **Verify**：执行测试/评估/安全检查后再提交最终答案或策略更新。
 
 ## WorkBuddy Runtime Contract
