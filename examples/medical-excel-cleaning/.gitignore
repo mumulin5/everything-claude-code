@@ -2,10 +2,19 @@
 data/raw/*
 data/interim/*
 data/clean/*
+data/marts/*
 reports/*
+suggestions/*
 
 # Keep the empty directories tracked.
 !data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/clean/.gitkeep
+!data/marts/.gitkeep
 !reports/.gitkeep
+!suggestions/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

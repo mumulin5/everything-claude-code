@@ -6,7 +6,12 @@ Inputs :
     data/raw/followup_status.xlsx (optional) columns:
         patient_id, last_visit_month, lost (0/1)
 
-Output : data/clean/followup_long.xlsx
+Outputs:
+    data/interim/followup.parquet  - wide -> long, types only
+    data/clean/followup_long.xlsx  - business-cleaned long table
+    data/clean/followup.parquet
+    data/marts/followup_wide.parquet - analysis-ready wide view
+
 Schema : patient_id x indicator x month  (uniqueness enforced)
 
 Missingness categories (`miss_type`):
@@ -21,11 +26,13 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import pandera as pa
-from pandera import Check, Column
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import RAW, load_excel, save_clean
+from _common import (  # noqa: E402
+    CLEAN, RAW, _save_parquet, cfg_get, load_excel,
+    save_clean, save_interim, save_marts,
+)
+from schemas import FollowupLongSchema  # noqa: E402
 
 # Sentinel used when last_visit_month is unknown: treat the patient as still
 # under follow-up so we don't mis-classify a missing value as `not_due`.
@@ -33,7 +40,7 @@ _MAX_MONTH = 10**9
 
 
 def main() -> None:
-    src = RAW / "followup.xlsx"
+    src = RAW / cfg_get("files", "followup", "input", default="followup.xlsx")
     if not src.exists():
         print(f"[skip] {src} not found. Place your raw follow-up Excel there and rerun.")
         return
@@ -52,8 +59,11 @@ def main() -> None:
     long["month"] = pd.to_numeric(long["month"], errors="coerce").astype("Int64")
     long["value"] = pd.to_numeric(long["value"], errors="coerce")
 
+    # --- Layer 2: interim (just shape + types, no business logic yet) -------
+    save_interim(long.copy(), "followup")
+
     # Optional: merge follow-up status to classify missingness.
-    status_path = RAW / "followup_status.xlsx"
+    status_path = RAW / cfg_get("files", "followup", "status", default="followup_status.xlsx")
     if status_path.exists():
         status = load_excel(status_path)
         status["last_visit_month"] = pd.to_numeric(
@@ -73,21 +83,24 @@ def main() -> None:
     long.loc[val_na & ~visited & (long["lost"] == 1), "miss_type"] = "lost"
     long.loc[val_na & ~visited & (long["lost"] == 0), "miss_type"] = "not_due"
 
-    # Schema: every (patient_id, indicator, month) must be unique.
-    schema = pa.DataFrameSchema(
-        {
-            "patient_id": Column(str),
-            "indicator": Column(str),
-            "month": Column("Int64", Check.ge(0), nullable=True),
-            "value": Column(float, nullable=True),
-            "miss_type": Column(str, Check.isin(["ok", "missing", "lost", "not_due"])),
-        },
-        unique=["patient_id", "indicator", "month"],
-        strict=False,
-    )
-    schema.validate(long, lazy=True)
+    # Schema check via DataFrameModel (P1).
+    FollowupLongSchema.validate(long, lazy=True)
 
-    out = save_clean(long, "followup_long.xlsx")
+    out = save_clean(long, cfg_get("files", "followup", "clean", default="followup_long.xlsx"))
+    _save_parquet(long, CLEAN, "followup")
+
+    # --- Layer 4: marts (analysis-ready wide table with miss_type counts) ---
+    if not long.empty:
+        wide_value = long.pivot_table(
+            index="patient_id", columns=["indicator", "month"],
+            values="value", aggfunc="first",
+        )
+        wide_value.columns = [f"{ind}_m{m}" for ind, m in wide_value.columns]
+        miss_summary = long.groupby("patient_id")["miss_type"].value_counts().unstack(fill_value=0)
+        miss_summary.columns = [f"miss_{c}" for c in miss_summary.columns]
+        marts = wide_value.join(miss_summary, how="left").reset_index()
+        save_marts(marts, "followup_wide")
+
     print(f"[ok] wrote {out} ({len(long)} rows)")
 
 

@@ -73,6 +73,13 @@ def followup() -> None:
     clean_followup.main()
 
 
+@app.command(name="suggest-dict")
+def suggest_dict() -> None:
+    """Cluster unmapped item/diagnosis values; suggest dict additions."""
+    import suggest_dict as _suggest  # type: ignore
+    _suggest.main()
+
+
 @app.command(name="all")
 def run_all() -> None:
     """Run lab + emr + followup in sequence."""

@@ -21,19 +21,24 @@ medical-excel-cleaning/
 ├── cli.py              # 统一命令行入口（typer）
 ├── data/
 │   ├── raw/            # 原始 Excel，只读不改
-│   ├── interim/        # 清洗中间产物
-│   └── clean/          # 清洗后输出
+│   ├── interim/        # 列名/类型标准化（parquet）
+│   ├── clean/          # 业务清洗后输出（xlsx + parquet）
+│   └── marts/          # 分析就绪宽表（parquet）
 ├── reports/            # ydata-profiling 数据质量 HTML 报告
+├── suggestions/        # suggest_dict.py 输出的字典建议
 ├── dict/               # 字典 / 映射表
 │   ├── sex.csv
 │   ├── unit.csv
 │   ├── lab_item.csv
 │   └── diagnosis_icd10.csv
+├── tests/              # pytest 端到端测试
 └── scripts/
     ├── _common.py
     ├── _config.py
+    ├── schemas.py          # Pandera DataFrameModel 数据契约
     ├── make_demo_data.py   # Faker 生成带"脏数据"的演示 Excel
     ├── profile.py          # ydata-profiling 数据体检
+    ├── suggest_dict.py     # 指纹聚类，自动建议字典新增条目
     ├── clean_lab.py
     ├── clean_emr.py
     └── clean_followup.py
@@ -42,7 +47,7 @@ medical-excel-cleaning/
 ## 快速开始
 
 ```bash
-# 1. 安装依赖（建议 Python 3.9+）
+# 1. 安装依赖（建议 Python 3.10+）
 pip install -r requirements.txt
 
 # 2A. 没有自己的数据？一键生成演示数据
@@ -63,10 +68,29 @@ python cli.py profile           # 输出到 reports/*.html
 python cli.py all
 # 或单独跑：python cli.py lab | emr | followup
 
-# 5. 在 data/clean/ 查看输出
+# 5. 看一下还有哪些字典条目缺失
+python cli.py suggest-dict      # 输出到 suggestions/*.csv
+
+# 6. 在 data/clean/ 和 data/marts/ 查看输出
+
+# 7. 跑测试（可选）
+pytest tests/
 ```
 
 > 旧用法仍然支持：`python scripts/clean_lab.py` 等脚本可以独立运行。
+
+## 数据分层（dbt 风格）
+
+```
+data/raw/      原始 Excel，只读不改
+   ↓ load_excel + clean_names
+data/interim/  列名 / 类型标准化（parquet，问题排查用）
+   ↓ 字典映射 + 模糊匹配 + 单位换算 + 日期解析 + 脱敏
+data/clean/    业务清洗后宽表（xlsx + parquet + log csv）
+   ↓ pivot / 汇总
+data/marts/    分析就绪宽表（parquet，followup_wide 含 miss_type 计数）
+```
+
 
 ## 通用清洗 7 步法
 
@@ -91,18 +115,19 @@ python cli.py all
 
 ## 关键约定
 
-- **字典即配置**：所有字段映射放在 `dict/*.csv`，改字典不改代码。
-- **数据分层**：`raw → interim → clean`，原始数据永远只读。
-- **随访长表**：随访数据**永远存长表**（patient_id × indicator × month），做报表时再 pivot。
-- **脱敏前置**：病历数据在 `clean_emr.py` 中已对 `name`/`id_card` 做 hash + 删除处理。
+- **配置即代码**：路径/字典名/模糊阈值/脱敏策略全在 `config.yaml`，改字典/阈值不改代码。
+- **数据契约**：所有 schema 集中在 `scripts/schemas.py`（Pandera `DataFrameModel`）。
+- **数据分层**：`raw → interim → clean → marts`，原始数据永远只读。
+- **随访长表**：随访数据**永远存长表**（patient_id × indicator × month），分析时再 pivot（`marts/followup_wide.parquet`）。
+- **脱敏前置**：病历数据在 `clean_emr.py` 中已对 `name`/`id_card` 做 hash + 删除处理；如果安装了 `presidio-analyzer` 还会进一步脱敏 `history_text` 中的姓名/电话/邮箱等。
 
 ## 扩展建议
 
 - 复杂诊断映射：接入 [MedCAT](https://github.com/CogStack/MedCAT)
-- PII 自动识别：接入 [presidio](https://github.com/microsoft/presidio)
+- PII 自动识别（已可选启用）：[Presidio](https://github.com/microsoft/presidio) — 取消 `requirements.txt` 中的注释即可
 - 持续质量监控：接入 [Great Expectations](https://greatexpectations.io/)
-- 单位换算：[pint](https://github.com/hgrecco/pint)
-- 杂乱日期解析：[dateparser](https://github.com/scrapinghub/dateparser)
+- 数据版本：[DVC](https://dvc.org/) 跟踪 `data/clean/` / `data/marts/`
+- 流水线编排：[Prefect](https://www.prefect.io/) / [Dagster](https://dagster.io/)
 
 ## License
 
