@@ -1,0 +1,11 @@
+# Generated artifacts -- never commit raw or cleaned medical data.
+data/raw/*
+data/interim/*
+data/clean/*
+reports/*
+
+# Keep the empty directories tracked.
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/clean/.gitkeep
+!reports/.gitkeep

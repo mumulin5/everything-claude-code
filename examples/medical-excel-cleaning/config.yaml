@@ -1,0 +1,61 @@
+# Central configuration for the medical Excel cleaning skeleton.
+#
+# Inspired by dbt / Soda Core: keep paths, dict names, thresholds, and
+# anonymization policy in one place so editing them does not require
+# touching the Python sources.
+#
+# Paths are resolved relative to this file.
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  clean: data/clean
+  dict: dict
+  reports: reports
+
+# Filenames inside `paths.raw` (inputs) and `paths.clean` (outputs).
+files:
+  lab:
+    input: lab.xlsx
+    clean: lab_clean.xlsx
+    log: lab_log.csv
+    schema_errors: lab_schema_errors.csv
+  emr:
+    input: emr.xlsx
+    clean: emr_clean.xlsx
+    log: emr_log.csv
+  followup:
+    input: followup.xlsx
+    status: followup_status.xlsx
+    clean: followup_long.xlsx
+
+# Dictionary CSVs in `paths.dict`. The cleaning code only references
+# the names below, so renaming a dict file means editing one line here.
+dicts:
+  sex: sex.csv
+  unit: unit.csv
+  lab_item: lab_item.csv
+  diagnosis_icd10: diagnosis_icd10.csv
+
+# RapidFuzz cutoffs for fuzzy mapping (0-100). Higher = stricter.
+fuzzy:
+  lab_item_cutoff: 80
+  diagnosis_cutoff: 80
+
+# Anonymization policy applied by clean_emr.py.
+#   drop_columns       -- removed entirely
+#   hash_columns       -- replaced by a short SHA-256 hash with the
+#                         given suffix (default `_hash`)
+anonymization:
+  drop_columns: [id_card]
+  hash_columns: [name]
+  hash_suffix: _hash
+  hash_length: 12
+
+# Demo data generator settings (see scripts/make_demo_data.py).
+demo:
+  seed: 42
+  n_patients: 50
+  lab_rows: 300
+  followup_months: [3, 6, 12, 24]
+  locale: zh_CN

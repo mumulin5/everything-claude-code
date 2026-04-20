@@ -17,10 +17,13 @@
 medical-excel-cleaning/
 ├── README.md
 ├── requirements.txt
+├── config.yaml         # 路径 / 字典名 / 模糊阈值 / 脱敏策略集中配置
+├── cli.py              # 统一命令行入口（typer）
 ├── data/
 │   ├── raw/            # 原始 Excel，只读不改
 │   ├── interim/        # 清洗中间产物
 │   └── clean/          # 清洗后输出
+├── reports/            # ydata-profiling 数据质量 HTML 报告
 ├── dict/               # 字典 / 映射表
 │   ├── sex.csv
 │   ├── unit.csv
@@ -28,6 +31,9 @@ medical-excel-cleaning/
 │   └── diagnosis_icd10.csv
 └── scripts/
     ├── _common.py
+    ├── _config.py
+    ├── make_demo_data.py   # Faker 生成带"脏数据"的演示 Excel
+    ├── profile.py          # ydata-profiling 数据体检
     ├── clean_lab.py
     ├── clean_emr.py
     └── clean_followup.py
@@ -39,7 +45,10 @@ medical-excel-cleaning/
 # 1. 安装依赖（建议 Python 3.9+）
 pip install -r requirements.txt
 
-# 2. 把原始 Excel 放入 data/raw/
+# 2A. 没有自己的数据？一键生成演示数据
+python cli.py demo
+
+# 2B. 有自己的数据？把原始 Excel 放入 data/raw/
 #    - lab.xlsx       列: item, value, unit, ref_range
 #    - emr.xlsx       列: name, id_card, sex, birth_date,
 #                         admit_date, discharge_date,
@@ -47,13 +56,17 @@ pip install -r requirements.txt
 #    - followup.xlsx  宽表，列名形如 bp_m3, bp_m6, bp_m12 ...
 #    - followup_status.xlsx  列: patient_id, last_visit_month, lost
 
-# 3. 运行
-python scripts/clean_lab.py
-python scripts/clean_emr.py
-python scripts/clean_followup.py
+# 3. （可选）清洗前先看一眼数据长什么样
+python cli.py profile           # 输出到 reports/*.html
 
-# 4. 在 data/clean/ 查看输出
+# 4. 一条命令跑完三类清洗
+python cli.py all
+# 或单独跑：python cli.py lab | emr | followup
+
+# 5. 在 data/clean/ 查看输出
 ```
+
+> 旧用法仍然支持：`python scripts/clean_lab.py` 等脚本可以独立运行。
 
 ## 通用清洗 7 步法
 

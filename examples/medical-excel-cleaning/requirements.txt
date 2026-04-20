@@ -3,3 +3,8 @@ openpyxl>=3.1
 pyjanitor>=0.27
 pandera>=0.18
 rapidfuzz>=3.6
+# P0 enhancements: unified CLI, YAML config, demo data, data profiling
+typer>=0.12
+PyYAML>=6.0
+faker>=24.0
+ydata-profiling>=4.10
