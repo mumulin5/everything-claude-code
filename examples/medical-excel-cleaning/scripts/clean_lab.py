@@ -57,7 +57,10 @@ def main() -> None:
         {
             "item_std": Column(str, nullable=True),
             "unit_std": Column(str, nullable=True),
-            "value_num": Column(float, Check.ge(0), nullable=True),
+            # No range check by default — most labs are non-negative, but
+            # some (deltas, base excess, temperature change) can be negative.
+            # Add per-item ranges in your own project.
+            "value_num": Column(float, nullable=True),
             "value_flag": Column(str, Check.isin(["", "<", ">", "<=", ">=", "invalid"])),
         },
         strict=False,

@@ -27,6 +27,10 @@ from pandera import Check, Column
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import RAW, load_excel, save_clean
 
+# Sentinel used when last_visit_month is unknown: treat the patient as still
+# under follow-up so we don't mis-classify a missing value as `not_due`.
+_MAX_MONTH = 10**9
+
 
 def main() -> None:
     src = RAW / "followup.xlsx"
@@ -64,7 +68,7 @@ def main() -> None:
 
     long["miss_type"] = "ok"
     val_na = long["value"].isna()
-    visited = long["month"] <= long["last_visit_month"].fillna(10**9)
+    visited = long["month"] <= long["last_visit_month"].fillna(_MAX_MONTH)
     long.loc[val_na & visited, "miss_type"] = "missing"
     long.loc[val_na & ~visited & (long["lost"] == 1), "miss_type"] = "lost"
     long.loc[val_na & ~visited & (long["lost"] == 0), "miss_type"] = "not_due"
