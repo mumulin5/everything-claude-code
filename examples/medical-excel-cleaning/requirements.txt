@@ -1,0 +1,19 @@
+pandas>=2.0
+openpyxl>=3.1
+pyjanitor>=0.27
+pandera>=0.18
+rapidfuzz>=3.6
+# P0 enhancements: unified CLI, YAML config, demo data, data profiling
+typer>=0.12
+PyYAML>=6.0
+faker>=24.0
+ydata-profiling>=4.10
+# P1: parquet for raw->interim->clean->marts layering
+pyarrow>=15.0
+# P2: real unit conversion + Chinese / fuzzy date parsing
+pint>=0.23
+dateparser>=1.2
+# P1 (optional): free-text PII scrubbing for EMR history_text.
+# Pulls in spaCy + a model; uncomment if you want Presidio anonymization:
+# presidio-analyzer>=2.2
+# presidio-anonymizer>=2.2

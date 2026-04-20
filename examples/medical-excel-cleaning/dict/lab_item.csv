@@ -1,0 +1,15 @@
+raw,std,loinc
+血糖,GLU,2345-7
+Glucose,GLU,2345-7
+GLU,GLU,2345-7
+空腹血糖,GLU,1558-6
+肌酐,CREA,2160-0
+Creatinine,CREA,2160-0
+血肌酐,CREA,2160-0
+尿素氮,BUN,3094-0
+BUN,BUN,3094-0
+血红蛋白,HGB,718-7
+Hemoglobin,HGB,718-7
+HGB,HGB,718-7
+白细胞,WBC,6690-2
+WBC,WBC,6690-2
