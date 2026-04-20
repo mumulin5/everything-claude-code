@@ -1,0 +1,5 @@
+pandas>=2.0
+openpyxl>=3.1
+pyjanitor>=0.27
+pandera>=0.18
+rapidfuzz>=3.6
